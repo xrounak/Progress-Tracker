@@ -8,6 +8,7 @@ interface SpreadsheetGridProps {
   dates: string[];
   dailyTotals: Record<string, number>;
   onToggle: (task: Task, date: string, nextStatus: boolean) => void;
+  togglingCells?: Set<string>;
 }
 
 export const SpreadsheetGrid: React.FC<SpreadsheetGridProps> = ({
@@ -15,7 +16,8 @@ export const SpreadsheetGrid: React.FC<SpreadsheetGridProps> = ({
   logs,
   dates,
   dailyTotals,
-  onToggle
+  onToggle,
+  togglingCells = new Set()
 }) => {
   return (
     <div className="overflow-x-auto rounded-lg border border-border bg-card/60 shadow-soft">
@@ -64,6 +66,7 @@ export const SpreadsheetGrid: React.FC<SpreadsheetGridProps> = ({
               dates={dates}
               logs={logs}
               onToggle={onToggle}
+              togglingCells={togglingCells}
             />
           ))
         )}

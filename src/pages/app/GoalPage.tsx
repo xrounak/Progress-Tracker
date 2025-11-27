@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useGoal } from "@/hooks/useGoal";
 import { useTasks } from "@/hooks/useTasks";
@@ -34,6 +34,7 @@ export const GoalPage: React.FC = () => {
     loading: logsLoading,
     upsertLog
   } = useTaskLogs(taskIds.length ? taskIds : null);
+  const [togglingCells, setTogglingCells] = useState<Set<string>>(new Set());
 
   const dates = useMemo(() => {
     if (!goal) return [];
@@ -50,12 +51,24 @@ export const GoalPage: React.FC = () => {
   }, [logs]);
 
   const handleToggle = async (task: Task, date: string, nextStatus: boolean) => {
-    await upsertLog({
-      task_id: task.id,
-      log_date: date,
-      status: nextStatus,
-      points_earned: nextStatus ? task.points : 0
-    });
+    const cellKey = `${task.id}-${date}`;
+    if (togglingCells.has(cellKey)) return;
+    
+    setTogglingCells((prev) => new Set(prev).add(cellKey));
+    try {
+      await upsertLog({
+        task_id: task.id,
+        log_date: date,
+        status: nextStatus,
+        points_earned: nextStatus ? task.points : 0
+      });
+    } finally {
+      setTogglingCells((prev) => {
+        const next = new Set(prev);
+        next.delete(cellKey);
+        return next;
+      });
+    }
   };
 
   const loading = goalLoading || tasksLoading || logsLoading;
@@ -98,6 +111,7 @@ export const GoalPage: React.FC = () => {
             dates={dates}
             dailyTotals={dailyTotals}
             onToggle={handleToggle}
+            togglingCells={togglingCells}
           />
         )}
       </section>

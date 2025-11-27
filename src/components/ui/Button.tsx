@@ -1,12 +1,14 @@
 import React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cn } from "@/utils/cn";
+import { Spinner } from "@/components/ui/Spinner";
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   asChild?: boolean;
   variant?: "primary" | "outline" | "ghost";
   size?: "sm" | "md" | "lg" | "icon";
+  isLoading?: boolean;
 }
 
 const base =
@@ -34,17 +36,32 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       variant = "primary",
       size = "md",
       className,
+      isLoading = false,
+      disabled,
+      children,
       ...props
     },
     ref
   ) => {
     const Comp = asChild ? Slot : "button";
+    const isDisabled = disabled || isLoading;
+    
     return (
       <Comp
         ref={ref}
         className={cn(base, variants[variant], sizes[size], className)}
+        disabled={isDisabled}
         {...props}
-      />
+      >
+        {isLoading ? (
+          <span className="flex items-center gap-2">
+            <Spinner size={size === "sm" ? "sm" : "md"} />
+            <span className="opacity-70">{children}</span>
+          </span>
+        ) : (
+          children
+        )}
+      </Comp>
     );
   }
 );

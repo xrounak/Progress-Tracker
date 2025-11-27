@@ -1,5 +1,5 @@
 import React from "react";
-import { Button } from "@/components/ui/Button";
+import { Spinner } from "@/components/ui/Spinner";
 import type { Task, TaskLog } from "@/types/habits";
 
 interface DateCellProps {
@@ -7,17 +7,20 @@ interface DateCellProps {
   date: string; // ISO yyyy-mm-dd
   log: TaskLog | undefined;
   onToggle: (task: Task, date: string, nextStatus: boolean) => void;
+  isLoading?: boolean;
 }
 
 export const DateCell: React.FC<DateCellProps> = ({
   task,
   date,
   log,
-  onToggle
+  onToggle,
+  isLoading = false
 }) => {
   const done = log?.status ?? false;
 
   const handleClick = () => {
+    if (isLoading) return;
     onToggle(task, date, !done);
   };
 
@@ -25,13 +28,20 @@ export const DateCell: React.FC<DateCellProps> = ({
     <button
       type="button"
       onClick={handleClick}
-      className={`flex h-9 w-9 items-center justify-center rounded-md border text-[11px] transition-all ${
+      disabled={isLoading}
+      className={`flex h-9 w-9 items-center justify-center rounded-md border text-[11px] transition-all disabled:cursor-not-allowed disabled:opacity-60 ${
         done
           ? "border-emerald-500/60 bg-emerald-500/15 text-emerald-300 shadow-[0_0_0_1px_rgba(16,185,129,0.25)]"
           : "border-border/60 bg-card/40 text-muted-foreground hover:bg-muted/70"
       }`}
     >
-      {done ? "✓" : ""}
+      {isLoading ? (
+        <Spinner size="sm" />
+      ) : done ? (
+        "✓"
+      ) : (
+        ""
+      )}
     </button>
   );
 };

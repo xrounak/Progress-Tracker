@@ -28,27 +28,40 @@ export const GoalsPage: React.FC = () => {
   const [goalDuration, setGoalDuration] = useState(21);
   const [taskTitle, setTaskTitle] = useState("");
   const [taskPoints, setTaskPoints] = useState(10);
+  const [creatingGoal, setCreatingGoal] = useState(false);
+  const [creatingTask, setCreatingTask] = useState(false);
+  const [togglingTasks, setTogglingTasks] = useState<Set<string>>(new Set());
 
   const handleCreateGoal = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!goalTitle.trim()) return;
-    await createGoal({
-      title: goalTitle.trim(),
-      duration_days: goalDuration,
-      start_date: todayIso()
-    });
-    setGoalTitle("");
+    if (!goalTitle.trim() || creatingGoal) return;
+    setCreatingGoal(true);
+    try {
+      await createGoal({
+        title: goalTitle.trim(),
+        duration_days: goalDuration,
+        start_date: todayIso()
+      });
+      setGoalTitle("");
+    } finally {
+      setCreatingGoal(false);
+    }
   };
 
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedGoalId || !taskTitle.trim()) return;
-    await createTask({
-      goal_id: selectedGoalId,
-      title: taskTitle.trim(),
-      points: taskPoints
-    });
-    setTaskTitle("");
+    if (!selectedGoalId || !taskTitle.trim() || creatingTask) return;
+    setCreatingTask(true);
+    try {
+      await createTask({
+        goal_id: selectedGoalId,
+        title: taskTitle.trim(),
+        points: taskPoints
+      });
+      setTaskTitle("");
+    } finally {
+      setCreatingTask(false);
+    }
   };
 
   const isTaskDoneToday = (task: Task): boolean => {
@@ -59,13 +72,23 @@ export const GoalsPage: React.FC = () => {
   };
 
   const toggleTaskToday = async (task: Task) => {
+    if (togglingTasks.has(task.id)) return;
     const done = isTaskDoneToday(task);
-    await upsertLog({
-      task_id: task.id,
-      log_date: todayIso(),
-      status: !done,
-      points_earned: !done ? task.points : 0
-    });
+    setTogglingTasks((prev) => new Set(prev).add(task.id));
+    try {
+      await upsertLog({
+        task_id: task.id,
+        log_date: todayIso(),
+        status: !done,
+        points_earned: !done ? task.points : 0
+      });
+    } finally {
+      setTogglingTasks((prev) => {
+        const next = new Set(prev);
+        next.delete(task.id);
+        return next;
+      });
+    }
   };
 
   const selectedGoal = goals.find((g) => g.id === selectedGoalId) ?? null;
@@ -124,7 +147,13 @@ export const GoalsPage: React.FC = () => {
                     className="w-28"
                   />
                 </div>
-                <Button type="submit" size="sm" className="mt-5">
+                <Button
+                  type="submit"
+                  size="sm"
+                  className="mt-5"
+                  isLoading={creatingGoal}
+                  disabled={creatingGoal}
+                >
                   Add goal
                 </Button>
               </div>
@@ -226,7 +255,12 @@ export const GoalsPage: React.FC = () => {
                       className="w-24"
                     />
                   </div>
-                  <Button type="submit" size="sm">
+                  <Button
+                    type="submit"
+                    size="sm"
+                    isLoading={creatingTask}
+                    disabled={creatingTask}
+                  >
                     Add task
                   </Button>
                 </form>
@@ -261,6 +295,8 @@ export const GoalsPage: React.FC = () => {
                           size="sm"
                           variant={doneToday ? "outline" : "primary"}
                           onClick={() => void toggleTaskToday(task)}
+                          isLoading={togglingTasks.has(task.id)}
+                          disabled={togglingTasks.has(task.id)}
                         >
                           {doneToday ? "Undo" : "Mark done"}
                         </Button>

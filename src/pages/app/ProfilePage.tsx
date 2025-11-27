@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -7,10 +7,17 @@ import { useAuth } from "@/context/AuthContext";
 export const ProfilePage: React.FC = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const [signingOut, setSigningOut] = useState(false);
 
   const handleSignOut = async () => {
-    await signOut();
-    navigate("/auth/login", { replace: true });
+    if (signingOut) return;
+    setSigningOut(true);
+    try {
+      await signOut();
+      navigate("/auth/login", { replace: true });
+    } finally {
+      setSigningOut(false);
+    }
   };
 
   return (
@@ -33,7 +40,13 @@ export const ProfilePage: React.FC = () => {
         <CardBody className="space-y-3 text-xs text-muted-foreground">
           <p>Email: {user?.email ?? "—"}</p>
           <p>UID: {user?.id ?? "—"}</p>
-          <Button variant="outline" size="sm" onClick={handleSignOut}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSignOut}
+            isLoading={signingOut}
+            disabled={signingOut}
+          >
             Sign out
           </Button>
         </CardBody>
