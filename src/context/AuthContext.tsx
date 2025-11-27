@@ -65,10 +65,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const signInWithGoogle: AuthContextValue["signInWithGoogle"] = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
+      options: {
+        redirectTo: "https://vivek-sir.vercel.app/auth/v1/callback",
+      },
     });
     if (error) {
       return { error: error.message };
     }
+    
     return {};
   };
 
