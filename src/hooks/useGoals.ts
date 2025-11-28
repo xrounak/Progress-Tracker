@@ -80,6 +80,8 @@ export const useGoals = (): UseGoalsResult => {
     });
     if (err) {
       setError(err.message);
+    } else {
+      void fetchGoals();
     }
   };
 
@@ -93,6 +95,8 @@ export const useGoals = (): UseGoalsResult => {
       .eq("id", id);
     if (err) {
       setError(err.message);
+    } else {
+      void fetchGoals();
     }
   };
 
@@ -100,6 +104,8 @@ export const useGoals = (): UseGoalsResult => {
     const { error: err } = await supabase.from("goals").delete().eq("id", id);
     if (err) {
       setError(err.message);
+    } else {
+      void fetchGoals();
     }
   };
 

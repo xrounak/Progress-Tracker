@@ -83,6 +83,8 @@ export const useTaskLogs = (taskIds: string[] | null): UseTaskLogsResult => {
     );
     if (err) {
       setError(err.message);
+    } else {
+      void fetchLogs();
     }
   };
 
