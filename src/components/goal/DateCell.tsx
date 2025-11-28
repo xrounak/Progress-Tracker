@@ -1,4 +1,4 @@
-import React from "react";
+import React, {  useState } from "react";
 import { Spinner } from "@/components/ui/Spinner";
 import type { Task, TaskLog } from "@/types/habits";
 
@@ -10,6 +10,8 @@ interface DateCellProps {
   isLoading?: boolean;
 }
 
+
+
 export const DateCell: React.FC<DateCellProps> = ({
   task,
   date,
@@ -18,10 +20,13 @@ export const DateCell: React.FC<DateCellProps> = ({
   isLoading = false
 }) => {
   const done = log?.status ?? false;
+  
+  const [refresh, setRefresh] = useState<number>(0);
 
   const handleClick = () => {
     if (isLoading) return;
     onToggle(task, date, !done);
+    setRefresh(refresh + 1);
   };
 
   return (
