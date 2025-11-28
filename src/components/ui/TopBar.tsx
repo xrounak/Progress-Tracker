@@ -27,7 +27,7 @@ export const TopBar: React.FC = () => {
         <div className="flex items-center gap-3">
           <Link
             to="/"
-            className="hidden text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground sm:inline"
+            className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground"
           >
             HabitTracker
           </Link>
