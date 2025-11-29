@@ -7,7 +7,7 @@ interface SpreadsheetGridProps {
   logs: TaskLog[];
   dates: string[];
   dailyTotals: Record<string, number>;
-  onToggle: (task: Task, date: string, nextStatus: boolean) => void;
+  onPointsChange: (task: Task, date: string, points: number) => void;
   togglingCells?: Set<string>;
 }
 
@@ -16,14 +16,15 @@ export const SpreadsheetGrid: React.FC<SpreadsheetGridProps> = ({
   logs,
   dates,
   dailyTotals,
-  onToggle,
+  onPointsChange,
   togglingCells = new Set()
 }) => {
   return (
     <div
       className="
-        w-screen max-w-full overflow-x-auto
+        w-full overflow-x-auto
         scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent
+        pb-4
       "
     >
       <div
@@ -88,7 +89,7 @@ export const SpreadsheetGrid: React.FC<SpreadsheetGridProps> = ({
               task={task}
               dates={dates}
               logs={logs}
-              onToggle={onToggle}
+              onPointsChange={onPointsChange}
               togglingCells={togglingCells}
             />
           ))

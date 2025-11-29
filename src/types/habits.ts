@@ -25,4 +25,15 @@ export interface TaskLog {
   created_at: string;
 }
 
-
+export interface UserProfile {
+  id: string;
+  name: string | null;
+  bio: string | null;
+  aim: string | null;
+  avatar_url: string | null;
+  mood_sticker: string;
+  location: string | null;
+  website: string | null;
+  created_at: string;
+  updated_at: string;
+}

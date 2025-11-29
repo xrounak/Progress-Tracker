@@ -6,7 +6,7 @@ interface TaskRowProps {
   task: Task;
   dates: string[];
   logs: TaskLog[];
-  onToggle: (task: Task, date: string, nextStatus: boolean) => void;
+  onPointsChange: (task: Task, date: string, points: number) => void;
   togglingCells?: Set<string>;
 }
 
@@ -14,7 +14,7 @@ export const TaskRow: React.FC<TaskRowProps> = ({
   task,
   dates,
   logs,
-  onToggle,
+  onPointsChange,
   togglingCells = new Set()
 }) => {
   const totalPoints = logs
@@ -37,7 +37,7 @@ export const TaskRow: React.FC<TaskRowProps> = ({
                 task={task}
                 date={date}
                 log={log}
-                onToggle={onToggle}
+                onPointsChange={onPointsChange}
                 isLoading={togglingCells.has(`${task.id}-${date}`)}
               />
             </div>
