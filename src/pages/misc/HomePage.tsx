@@ -2,6 +2,9 @@ import React, { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
+
+import { BottomNav } from "@/components/ui/BottomNav";
+import { TopBar } from "@/components/ui/TopBar";
 import { useAuth } from "@/context/AuthContext";
 import { useGoals } from "@/hooks/useGoals";
 import { useProfile } from "@/hooks/useProfile";
@@ -38,6 +41,8 @@ export const HomePage: React.FC = () => {
 
   if (!isLoggedIn) {
     return (
+      <>
+      
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-emerald-950/20 px-4 py-10">
         <div className="max-w-2xl space-y-8 text-center">
           {/* Hero Section */}
@@ -113,11 +118,14 @@ export const HomePage: React.FC = () => {
           </div>
         </div>
       </div>
+      </>
     );
   }
 
   // Logged-in user view
   return (
+    <>
+    <TopBar/>
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-emerald-950/20 px-4 py-10">
       <div className="mx-auto max-w-6xl space-y-8">
         {/* Welcome Header */}
@@ -318,5 +326,10 @@ export const HomePage: React.FC = () => {
         )}
       </div>
     </div>
+    <br />
+    <br />
+    <br />
+    <BottomNav/>
+    </>
   );
 };

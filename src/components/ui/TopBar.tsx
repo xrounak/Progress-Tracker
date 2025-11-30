@@ -25,15 +25,16 @@ export const TopBar: React.FC = () => {
     <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-3">
         <div className="flex items-center gap-3">
+{/* 
+          <span className="text-sm font-medium text-foreground/80 sm:text-base">
+            {title}
+          </span> */}
           <Link
             to="/"
             className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground"
           >
             HabitTracker
           </Link>
-          <span className="text-sm font-medium text-foreground/80 sm:text-base">
-            {title}
-          </span>
         </div>
 
         <div className="flex items-center gap-2">
