@@ -6,8 +6,10 @@ import { useGoals } from "@/hooks/useGoals";
 import { AddGoalDialog } from "@/components/goal/AddGoalDialog";
 import { EditGoalDialog } from "@/components/goal/EditGoalDialog";
 import { useTasks } from "@/hooks/useTasks";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Target } from "lucide-react";
 import type { Goal } from "@/types/habits";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { useToast } from "@/context/ToastContext";
 
 export const GoalsPage: React.FC = () => {
   const { goals, loading: goalsLoading, error: goalsError, createGoal, updateGoal, deleteGoal } = useGoals();
@@ -15,9 +17,30 @@ export const GoalsPage: React.FC = () => {
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
   const { createTask } = useTasks(null);
 
-  const handleDeleteGoal = async (goalId: string, goalTitle: string) => {
-    if (confirm(`Are you sure you want to delete "${goalTitle}"? This will also delete all associated tasks.`)) {
-      await deleteGoal(goalId);
+  // Confirm Dialog State
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [goalToDelete, setGoalToDelete] = useState<{ id: string; title: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const { showToast } = useToast();
+
+  const handleDeleteClick = (goal: Goal) => {
+    setGoalToDelete({ id: goal.id, title: goal.title });
+    setConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!goalToDelete) return;
+    setIsDeleting(true);
+    try {
+      await deleteGoal(goalToDelete.id);
+      showToast("Goal deleted successfully", "success");
+    } catch (error) {
+      showToast("Failed to delete goal", "error");
+    } finally {
+      setIsDeleting(false);
+      setConfirmOpen(false);
+      setGoalToDelete(null);
     }
   };
 
@@ -64,9 +87,17 @@ export const GoalsPage: React.FC = () => {
 
           <div className="space-y-2">
             {goals.length === 0 && (
-              <p className="text-[11px] text-muted-foreground">
-                No goals yet. Create your first challenge above.
-              </p>
+              <div className="flex flex-col items-center justify-center py-8 text-center space-y-3">
+                <div className="p-3 bg-muted/50 rounded-full">
+                  <Target className="h-6 w-6 text-muted-foreground" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-foreground">No goals yet</p>
+                  <p className="text-[11px] text-muted-foreground max-w-[200px]">
+                    Start your journey by creating your first goal or challenge above.
+                  </p>
+                </div>
+              </div>
             )}
             {goals.map((goal) => (
               <div
@@ -87,19 +118,19 @@ export const GoalsPage: React.FC = () => {
                     size="sm"
                     variant="ghost"
                     onClick={() => setEditingGoal(goal)}
-                    className="h-7 w-7 p-0"
+                    className="h-8 w-8 p-0"
                     title="Edit goal"
                   >
-                    <Pencil className="h-3.5 w-3.5" />
+                    <Pencil className="h-4 w-4" />
                   </Button>
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => handleDeleteGoal(goal.id, goal.title)}
-                    className="h-7 w-7 p-0 text-red-400 hover:text-red-300"
+                    onClick={() => handleDeleteClick(goal)}
+                    className="h-8 w-8 p-0 text-red-400 hover:text-red-300"
                     title="Delete goal"
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
@@ -122,6 +153,18 @@ export const GoalsPage: React.FC = () => {
         onClose={() => setEditingGoal(null)}
         goal={editingGoal}
         onUpdateGoal={updateGoal}
+      />
+
+      {/* Confirm Delete Dialog */}
+      <ConfirmDialog
+        isOpen={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Goal"
+        message={`Are you sure you want to delete "${goalToDelete?.title}"? This will also delete all associated tasks and cannot be undone.`}
+        confirmText="Delete Goal"
+        variant="danger"
+        isLoading={isDeleting}
       />
     </div>
   );

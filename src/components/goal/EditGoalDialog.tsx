@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { useToast } from "@/context/ToastContext";
 
 interface EditGoalDialogProps {
     isOpen: boolean;
@@ -36,12 +37,14 @@ export const EditGoalDialog: React.FC<EditGoalDialogProps> = ({
         }
     }, [goal]);
 
+    const { showToast } = useToast();
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
 
         if (!title.trim()) {
-            setError("Please enter a goal title");
+            showToast("Please enter a goal title", "error");
             return;
         }
 
@@ -54,9 +57,10 @@ export const EditGoalDialog: React.FC<EditGoalDialogProps> = ({
                 duration_days: duration,
                 description: description.trim() || undefined,
             });
+            showToast("Goal updated successfully", "success");
             onClose();
         } catch (err) {
-            setError("Failed to update goal. Please try again.");
+            showToast("Failed to update goal", "error");
         } finally {
             setIsUpdating(false);
         }

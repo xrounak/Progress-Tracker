@@ -3,6 +3,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { X, Plus, Sparkles } from "lucide-react";
+import { useToast } from "@/context/ToastContext";
 
 interface TaskInput {
     id: string;
@@ -44,6 +45,8 @@ export const AddGoalDialog: React.FC<AddGoalDialogProps> = ({
     const [showSuccess, setShowSuccess] = useState(false);
     const [error, setError] = useState("");
 
+    const { showToast } = useToast();
+
     const handleAddTask = () => {
         const newTask: TaskInput = {
             id: Date.now().toString(),
@@ -73,13 +76,13 @@ export const AddGoalDialog: React.FC<AddGoalDialogProps> = ({
 
         // Validation
         if (!goalTitle.trim()) {
-            setError("Please enter a goal title");
+            showToast("Please enter a goal title", "error");
             return;
         }
 
         const validTasks = tasks.filter((task) => task.title.trim());
         if (validTasks.length === 0) {
-            setError("Please add at least one task");
+            showToast("Please add at least one task", "error");
             return;
         }
 
@@ -106,6 +109,7 @@ export const AddGoalDialog: React.FC<AddGoalDialogProps> = ({
 
             // Show success message
             setShowSuccess(true);
+            showToast("Goal created successfully! 🎉", "success");
 
             // Reset form after a delay
             setTimeout(() => {
@@ -114,7 +118,7 @@ export const AddGoalDialog: React.FC<AddGoalDialogProps> = ({
                 onClose();
             }, 2000);
         } catch (err) {
-            setError("Failed to create goal. Please try again.");
+            showToast("Failed to create goal. Please try again.", "error");
             setIsCreating(false);
         }
     };
@@ -155,9 +159,9 @@ export const AddGoalDialog: React.FC<AddGoalDialogProps> = ({
                     </div>
                 </div>
             ) : (
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-3">
                     {/* Goal Title */}
-                    <div className="space-y-1.5">
+                    <div className="space-y-1">
                         <label className="text-xs font-medium text-muted-foreground">
                             Goal Title *
                         </label>
@@ -166,11 +170,12 @@ export const AddGoalDialog: React.FC<AddGoalDialogProps> = ({
                             onChange={(e) => setGoalTitle(e.target.value)}
                             placeholder="e.g., 21-day morning routine"
                             disabled={isCreating}
+                            className="h-9 text-sm"
                         />
                     </div>
 
                     {/* Duration */}
-                    <div className="space-y-1.5">
+                    <div className="space-y-1">
                         <label className="text-xs font-medium text-muted-foreground">
                             Duration (days)
                         </label>
@@ -180,7 +185,7 @@ export const AddGoalDialog: React.FC<AddGoalDialogProps> = ({
                             value={duration}
                             onChange={(e) => setDuration(Number(e.target.value) || 1)}
                             disabled={isCreating}
-                            className="w-32"
+                            className="w-32 h-9 text-sm"
                         />
                     </div>
 
@@ -189,14 +194,14 @@ export const AddGoalDialog: React.FC<AddGoalDialogProps> = ({
                         <label className="text-xs font-medium text-muted-foreground">
                             Tasks
                         </label>
-                        <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                        <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-1">
                             {tasks.map((task, index) => (
                                 <div
                                     key={task.id}
-                                    className="flex items-end gap-2 p-3 rounded-lg border border-border/70 bg-card/60"
+                                    className="flex flex-col sm:flex-row sm:items-end gap-2 p-2 rounded-lg border border-border/70 bg-card/60"
                                 >
-                                    <div className="flex-1 space-y-1.5">
-                                        <label className="text-[11px] font-medium text-muted-foreground">
+                                    <div className="flex-1 space-y-1 w-full">
+                                        <label className="text-[10px] font-medium text-muted-foreground">
                                             Task {index + 1}
                                         </label>
                                         <Input
@@ -206,39 +211,42 @@ export const AddGoalDialog: React.FC<AddGoalDialogProps> = ({
                                             }
                                             placeholder="e.g., Drink 500ml water"
                                             disabled={isCreating}
+                                            className="h-8 text-xs"
                                         />
                                     </div>
-                                    <div className="space-y-1.5">
-                                        <label className="text-[11px] font-medium text-muted-foreground">
-                                            Points
-                                        </label>
-                                        <Input
-                                            type="number"
-                                            min={1}
-                                            value={task.points}
-                                            onChange={(e) =>
-                                                handleTaskChange(
-                                                    task.id,
-                                                    "points",
-                                                    Number(e.target.value) || 1
-                                                )
-                                            }
-                                            disabled={isCreating}
-                                            className="w-20"
-                                        />
+                                    <div className="flex items-end gap-2 w-full sm:w-auto">
+                                        <div className="space-y-1 flex-1 sm:flex-none">
+                                            <label className="text-[10px] font-medium text-muted-foreground">
+                                                Points
+                                            </label>
+                                            <Input
+                                                type="number"
+                                                min={1}
+                                                value={task.points}
+                                                onChange={(e) =>
+                                                    handleTaskChange(
+                                                        task.id,
+                                                        "points",
+                                                        Number(e.target.value) || 1
+                                                    )
+                                                }
+                                                disabled={isCreating}
+                                                className="w-full sm:w-16 h-8 text-xs"
+                                            />
+                                        </div>
+                                        {tasks.length > 1 && (
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => handleRemoveTask(task.id)}
+                                                disabled={isCreating}
+                                                className="shrink-0 h-8 w-8 p-0"
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </Button>
+                                        )}
                                     </div>
-                                    {tasks.length > 1 && (
-                                        <Button
-                                            type="button"
-                                            size="sm"
-                                            variant="outline"
-                                            onClick={() => handleRemoveTask(task.id)}
-                                            disabled={isCreating}
-                                            className="shrink-0"
-                                        >
-                                            <X className="h-4 w-4" />
-                                        </Button>
-                                    )}
                                 </div>
                             ))}
                         </div>
@@ -250,9 +258,9 @@ export const AddGoalDialog: React.FC<AddGoalDialogProps> = ({
                             variant="outline"
                             onClick={handleAddTask}
                             disabled={isCreating}
-                            className="w-full"
+                            className="w-full h-8 text-xs"
                         >
-                            <Plus className="h-4 w-4 mr-2" />
+                            <Plus className="h-3.5 w-3.5 mr-2" />
                             Add More Task
                         </Button>
                     </div>
@@ -271,7 +279,7 @@ export const AddGoalDialog: React.FC<AddGoalDialogProps> = ({
                             variant="outline"
                             onClick={handleClose}
                             disabled={isCreating}
-                            className="flex-1"
+                            className="flex-1 h-9"
                         >
                             Cancel
                         </Button>
@@ -279,7 +287,7 @@ export const AddGoalDialog: React.FC<AddGoalDialogProps> = ({
                             type="submit"
                             isLoading={isCreating}
                             disabled={isCreating}
-                            className="flex-1"
+                            className="flex-1 h-9"
                         >
                             Create Goal
                         </Button>

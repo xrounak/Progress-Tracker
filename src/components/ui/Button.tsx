@@ -6,7 +6,7 @@ import { Spinner } from "@/components/ui/Spinner";
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   asChild?: boolean;
-  variant?: "primary" | "outline" | "ghost";
+  variant?: "primary" | "outline" | "ghost" | "destructive" | "default";
   size?: "sm" | "md" | "lg" | "icon";
   isLoading?: boolean;
 }
@@ -17,9 +17,13 @@ const base =
 const variants: Record<NonNullable<ButtonProps["variant"]>, string> = {
   primary:
     "bg-accent text-accent-foreground hover:bg-emerald-500 shadow-soft shadow-emerald-500/40",
+  default:
+    "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm",
   outline:
     "border border-border bg-transparent hover:bg-muted text-foreground/90",
-  ghost: "bg-transparent hover:bg-muted text-foreground/80"
+  ghost: "bg-transparent hover:bg-muted text-foreground/80",
+  destructive:
+    "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm",
 };
 
 const sizes: Record<NonNullable<ButtonProps["size"]>, string> = {
@@ -45,7 +49,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ) => {
     const Comp = asChild ? Slot : "button";
     const isDisabled = disabled || isLoading;
-    
+
     return (
       <Comp
         ref={ref}
