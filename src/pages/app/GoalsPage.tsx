@@ -1,97 +1,25 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
 import { useGoals } from "@/hooks/useGoals";
+import { AddGoalDialog } from "@/components/goal/AddGoalDialog";
+import { EditGoalDialog } from "@/components/goal/EditGoalDialog";
 import { useTasks } from "@/hooks/useTasks";
-import { useTaskLogs } from "@/hooks/useTaskLogs";
-import type { Task } from "@/types/habits";
-
-const todayIso = () => new Date().toISOString().slice(0, 10);
+import { Plus, Pencil, Trash2 } from "lucide-react";
+import type { Goal } from "@/types/habits";
 
 export const GoalsPage: React.FC = () => {
-  const { goals, loading: goalsLoading, error: goalsError, createGoal } =
-    useGoals();
-  const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
+  const { goals, loading: goalsLoading, error: goalsError, createGoal, updateGoal, deleteGoal } = useGoals();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
+  const { createTask } = useTasks(null);
 
-  const {
-    tasks,
-    loading: tasksLoading,
-    createTask
-  } = useTasks(selectedGoalId);
-
-  const taskIds = useMemo(() => tasks.map((t) => t.id), [tasks]);
-  const { logs, upsertLog } = useTaskLogs(taskIds.length ? taskIds : null);
-
-  const [goalTitle, setGoalTitle] = useState("");
-  const [goalDuration, setGoalDuration] = useState(21);
-  const [taskTitle, setTaskTitle] = useState("");
-  const [taskPoints, setTaskPoints] = useState(10);
-  const [creatingGoal, setCreatingGoal] = useState(false);
-  const [creatingTask, setCreatingTask] = useState(false);
-  const [togglingTasks, setTogglingTasks] = useState<Set<string>>(new Set());
-
-  const handleCreateGoal = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!goalTitle.trim() || creatingGoal) return;
-    setCreatingGoal(true);
-    try {
-      await createGoal({
-        title: goalTitle.trim(),
-        duration_days: goalDuration,
-        start_date: todayIso()
-      });
-      setGoalTitle("");
-    } finally {
-      setCreatingGoal(false);
+  const handleDeleteGoal = async (goalId: string, goalTitle: string) => {
+    if (confirm(`Are you sure you want to delete "${goalTitle}"? This will also delete all associated tasks.`)) {
+      await deleteGoal(goalId);
     }
   };
-
-  const handleCreateTask = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedGoalId || !taskTitle.trim() || creatingTask) return;
-    setCreatingTask(true);
-    try {
-      await createTask({
-        goal_id: selectedGoalId,
-        title: taskTitle.trim(),
-        points: taskPoints
-      });
-      setTaskTitle("");
-    } finally {
-      setCreatingTask(false);
-    }
-  };
-
-  const isTaskDoneToday = (task: Task): boolean => {
-    const log = logs.find(
-      (l) => l.task_id === task.id && l.log_date === todayIso()
-    );
-    return log?.status ?? false;
-  };
-
-  const toggleTaskToday = async (task: Task) => {
-    if (togglingTasks.has(task.id)) return;
-    const done = isTaskDoneToday(task);
-    setTogglingTasks((prev) => new Set(prev).add(task.id));
-    try {
-      await upsertLog({
-        task_id: task.id,
-        log_date: todayIso(),
-        status: !done,
-        points_earned: !done ? task.points : 0
-      });
-    } finally {
-      setTogglingTasks((prev) => {
-        const next = new Set(prev);
-        next.delete(task.id);
-        return next;
-      });
-    }
-  };
-
-  const selectedGoal = goals.find((g) => g.id === selectedGoalId) ?? null;
 
   return (
     <div className="space-y-4">
@@ -106,210 +34,95 @@ export const GoalsPage: React.FC = () => {
         </div>
       </section>
 
-      <div className="grid gap-4 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1.6fr)]">
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-semibold text-foreground">
-                Your goals
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-semibold text-foreground">
+              Your goals
+            </span>
+            {goalsLoading && (
+              <span className="text-[11px] text-muted-foreground">
+                Loading...
               </span>
-              {goalsLoading && (
-                <span className="text-[11px] text-muted-foreground">
-                  Loading...
-                </span>
-              )}
-            </div>
-          </CardHeader>
-          <CardBody className="space-y-4 text-xs">
-            <form onSubmit={handleCreateGoal} className="space-y-2">
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-medium text-muted-foreground">
-                  New goal title
-                </label>
-                <Input
-                  value={goalTitle}
-                  onChange={(e) => setGoalTitle(e.target.value)}
-                  placeholder="21-day morning routine"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-medium text-muted-foreground">
-                    Duration (days)
-                  </label>
-                  <Input
-                    type="number"
-                    min={1}
-                    value={goalDuration}
-                    onChange={(e) =>
-                      setGoalDuration(Number(e.target.value) || 1)
-                    }
-                    className="w-28"
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  size="sm"
-                  className="mt-5"
-                  isLoading={creatingGoal}
-                  disabled={creatingGoal}
-                >
-                  Add goal
-                </Button>
-              </div>
-            </form>
-
-            {goalsError && (
-              <p className="text-[11px] text-red-400">{goalsError}</p>
             )}
+          </div>
+        </CardHeader>
+        <CardBody className="space-y-4 text-xs">
+          {/* Add Goal Button */}
+          <Button
+            onClick={() => setIsDialogOpen(true)}
+            size="sm"
+            className="w-full"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Goal
+          </Button>
 
-            <div className="space-y-1">
-              {goals.length === 0 && (
-                <p className="text-[11px] text-muted-foreground">
-                  No goals yet. Create your first challenge above.
-                </p>
-              )}
-              {goals.map((goal) => (
-                <div
-                  key={goal.id}
-                  className={`flex w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-[11px] transition-colors ${
-                    selectedGoalId === goal.id
-                      ? "border-accent/70 bg-accent/10 text-foreground"
-                      : "border-border/70 bg-card/60 text-muted-foreground hover:bg-muted/70 hover:text-foreground"
-                  }`}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setSelectedGoalId(goal.id)}
-                    className="flex flex-1 items-center justify-between text-left"
-                  >
-                    <span className="font-medium truncate">{goal.title}</span>
-                    <span className="ml-2 text-[10px] shrink-0">
-                      {goal.duration_days} days
-                    </span>
-                  </button>
-                  <Button asChild size="sm" variant="outline" className="shrink-0">
-                    <Link to={`/app/goal/${goal.id}`}>Open grid</Link>
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </CardBody>
-        </Card>
+          {goalsError && (
+            <p className="text-[11px] text-red-400">{goalsError}</p>
+          )}
 
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-semibold text-foreground">
-                Tasks &amp; daily check-in
-              </span>
-              {tasksLoading && (
-                <span className="text-[11px] text-muted-foreground">
-                  Loading...
-                </span>
-              )}
-            </div>
-          </CardHeader>
-          <CardBody className="space-y-4 text-xs">
-            {!selectedGoal && (
+          <div className="space-y-2">
+            {goals.length === 0 && (
               <p className="text-[11px] text-muted-foreground">
-                Select a goal on the left to manage its tasks.
+                No goals yet. Create your first challenge above.
               </p>
             )}
-
-            {selectedGoal && (
-              <>
-                <p className="text-[11px] text-muted-foreground">
-                  Goal:{" "}
-                  <span className="font-medium text-foreground">
-                    {selectedGoal.title}
-                  </span>{" "}
-                  • {selectedGoal.duration_days} days
-                </p>
-
-                <form
-                  onSubmit={handleCreateTask}
-                  className="flex flex-wrap items-end gap-2"
+            {goals.map((goal) => (
+              <div
+                key={goal.id}
+                className="flex items-center justify-between gap-2 rounded-md border border-border/70 bg-card/60 px-3 py-2.5 text-[11px] transition-colors hover:bg-muted/70"
+              >
+                <Link
+                  to={`/app/goal/${goal.id}`}
+                  className="flex-1 flex items-center justify-between text-foreground hover:text-foreground"
                 >
-                  <div className="min-w-[160px] flex-1 space-y-1.5">
-                    <label className="text-[11px] font-medium text-muted-foreground">
-                      New task
-                    </label>
-                    <Input
-                      value={taskTitle}
-                      onChange={(e) => setTaskTitle(e.target.value)}
-                      placeholder="Drink 500ml water"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-medium text-muted-foreground">
-                      Points
-                    </label>
-                    <Input
-                      type="number"
-                      min={1}
-                      value={taskPoints}
-                      onChange={(e) =>
-                        setTaskPoints(Number(e.target.value) || 1)
-                      }
-                      className="w-24"
-                    />
-                  </div>
+                  <span className="font-medium truncate">{goal.title}</span>
+                  <span className="ml-2 text-[10px] text-muted-foreground shrink-0">
+                    {goal.duration_days} days
+                  </span>
+                </Link>
+                <div className="flex items-center gap-1">
                   <Button
-                    type="submit"
                     size="sm"
-                    isLoading={creatingTask}
-                    disabled={creatingTask}
+                    variant="ghost"
+                    onClick={() => setEditingGoal(goal)}
+                    className="h-7 w-7 p-0"
+                    title="Edit goal"
                   >
-                    Add task
+                    <Pencil className="h-3.5 w-3.5" />
                   </Button>
-                </form>
-
-                <div className="space-y-1">
-                  {tasks.length === 0 && (
-                    <p className="text-[11px] text-muted-foreground">
-                      No tasks yet. Add a few micro-actions above.
-                    </p>
-                  )}
-                  {tasks.map((task) => {
-                    const doneToday = isTaskDoneToday(task);
-                    return (
-                      <div
-                        key={task.id}
-                        className="flex items-center justify-between rounded-md border border-border/70 bg-card/60 px-3 py-2"
-                      >
-                        <div>
-                          <p className="text-[11px] font-medium text-foreground">
-                            {task.title}
-                          </p>
-                          <p className="text-[10px] text-muted-foreground">
-                            {task.points} pts • today:{" "}
-                            <span
-                              className={doneToday ? "text-emerald-400" : ""}
-                            >
-                              {doneToday ? "done" : "not done"}
-                            </span>
-                          </p>
-                        </div>
-                        <Button
-                          size="sm"
-                          variant={doneToday ? "outline" : "primary"}
-                          onClick={() => void toggleTaskToday(task)}
-                          isLoading={togglingTasks.has(task.id)}
-                          disabled={togglingTasks.has(task.id)}
-                        >
-                          {doneToday ? "Undo" : "Mark done"}
-                        </Button>
-                      </div>
-                    );
-                  })}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleDeleteGoal(goal.id, goal.title)}
+                    className="h-7 w-7 p-0 text-red-400 hover:text-red-300"
+                    title="Delete goal"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
                 </div>
-              </>
-            )}
-          </CardBody>
-        </Card>
-      </div>
+              </div>
+            ))}
+          </div>
+        </CardBody>
+      </Card>
+
+      {/* Add Goal Dialog */}
+      <AddGoalDialog
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onCreateGoal={createGoal}
+        onCreateTask={createTask}
+      />
+
+      {/* Edit Goal Dialog */}
+      <EditGoalDialog
+        isOpen={!!editingGoal}
+        onClose={() => setEditingGoal(null)}
+        goal={editingGoal}
+        onUpdateGoal={updateGoal}
+      />
     </div>
   );
 };
-

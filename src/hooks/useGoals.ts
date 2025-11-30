@@ -12,8 +12,8 @@ interface UseGoalsResult {
     description?: string;
     duration_days: number;
     start_date: string;
-  }) => Promise<void>;
-  updateGoal: (id: string, patch: Partial<Pick<Goal, "title" | "description">>) => Promise<void>;
+  }) => Promise<Goal | undefined>;
+  updateGoal: (id: string, patch: Partial<Pick<Goal, "title" | "description" | "duration_days">>) => Promise<void>;
   deleteGoal: (id: string) => Promise<void>;
   refetch: () => Promise<void>;
 }
@@ -71,17 +71,19 @@ export const useGoals = (): UseGoalsResult => {
 
   const createGoal: UseGoalsResult["createGoal"] = async (payload) => {
     if (!user) return;
-    const { error: err } = await supabase.from("goals").insert({
+    const { data, error: err } = await supabase.from("goals").insert({
       user_id: user.id,
       title: payload.title,
       description: payload.description ?? null,
       duration_days: payload.duration_days,
       start_date: payload.start_date
-    });
+    }).select().single();
     if (err) {
       setError(err.message);
+      throw err;
     } else {
       void fetchGoals();
+      return data as Goal;
     }
   };
 
@@ -90,11 +92,13 @@ export const useGoals = (): UseGoalsResult => {
       .from("goals")
       .update({
         title: patch.title,
-        description: patch.description
+        description: patch.description,
+        duration_days: patch.duration_days
       })
       .eq("id", id);
     if (err) {
       setError(err.message);
+      throw err;
     } else {
       void fetchGoals();
     }

@@ -7,6 +7,7 @@ interface UseTasksResult {
   loading: boolean;
   error: string | null;
   createTask: (payload: { goal_id: string; title: string; points: number }) => Promise<void>;
+  updateTask: (id: string, payload: { title: string; points: number }) => Promise<void>;
   deleteTask: (id: string) => Promise<void>;
   refetch: () => Promise<void>;
 }
@@ -78,11 +79,26 @@ export const useTasks = (goalId: string | null): UseTasksResult => {
     }
   };
 
+  const updateTask: UseTasksResult["updateTask"] = async (id, payload) => {
+    const { error: err } = await supabase
+      .from("tasks")
+      .update({
+        title: payload.title,
+        points: payload.points
+      })
+      .eq("id", id);
+    if (err) {
+      setError(err.message);
+      throw err;
+    }
+  };
+
   return {
     tasks,
     loading,
     error,
     createTask,
+    updateTask,
     deleteTask,
     refetch: fetchTasks
   };
