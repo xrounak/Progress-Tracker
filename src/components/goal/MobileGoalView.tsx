@@ -19,14 +19,13 @@ export const MobileGoalView: React.FC<MobileGoalViewProps> = ({
     togglingCells = new Set(),
 }) => {
 
+    // === DEFAULT SELECTED DATE → TODAY IF EXISTS, OTHERWISE LAST DATE ===
     const todayString = new Date().toISOString().slice(0, 10);
     const todayIndex = dates.findIndex((d) => d === todayString);
 
-    // ------- DEFAULT SELECTED DATE UPDATED HERE -------
     const [selectedDateIndex, setSelectedDateIndex] = useState<number>(
         todayIndex !== -1 ? todayIndex : dates.length - 1
     );
-    // ---------------------------------------------------
 
     useEffect(() => {
         if (dates.length > 0) {
@@ -38,130 +37,15 @@ export const MobileGoalView: React.FC<MobileGoalViewProps> = ({
     const selectedDate = dates[selectedDateIndex];
 
     const handlePrev = () => {
-        if (selectedDateIndex > 0) setSelectedDateIndex((prev) => prev - 1);
+        if (selectedDateIndex > 0) {
+            setSelectedDateIndex((prev) => prev - 1);
+        }
     };
 
     const handleNext = () => {
-        if (selectedDateIndex < dates.length - 1) setSelectedDateIndex((prev) => prev + 1);
-    };
-
-    const isToday = (dateString: string) => {
-        const today = new Date().toISOString().slice(0, 10);
-        return dateString === today;
-    };
-
-    const formatDate = (dateString: string) => {
-        if (!dateString) return "";
-        const date = new Date(dateString);
-        return date.toLocaleDateString(undefined, {
-            weekday: "long",
-            month: "long",
-            day: "numeric",
-        });
-    };
-
-    const getTaskPoints = (taskId: string, date: string) => {
-        const log = logs.find((l) => l.task_id === taskId && l.log_date === date);
-        return log?.points_earned ?? 0;
-    };
-
-    if (!selectedDate) {
-        return <div className="p-4 text-center text-muted-foreground">No dates available</div>;
-    }
-
-    return (
-        <div className="flex flex-col gap-4 pb-20">
-            <div className="flex items-center justify-between rounded-xl border border-border bg-card/50 p-2 backdrop-blur-sm">
-                <button
-                    onClick={handlePrev}
-                    disabled={selectedDateIndex === 0}
-                    className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-muted disabled:opacity-30"
-                >
-                    <ChevronLeft className="h-5 w-5" />
-                </button>
-
-                <div className="text-center">
-                    <div className="text-sm font-semibold">{formatDate(selectedDate)}</div>
-                    {isToday(selectedDate) && (
-                        <div className="text-[10px] font-medium text-primary uppercase tracking-wider">Today</div>
-                    )}
-                </div>
-
-                <button
-                    onClick={handleNext}
-                    disabled={selectedDateIndex === dates.length - 1}
-                    className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-muted disabled:opacity-30"
-                >
-                    <ChevronRight className="h-5 w-5" />
-                </button>
-            </div>
-
-            <div className="space-y-3">
-                {tasks.map((task) => {
-                    const points = getTaskPoints(task.id, selectedDate);
-                    const isCompleted = points > 0;
-                    const isToggling = togglingCells.has(`${task.id}-${selectedDate}`);
-
-                    return (
-                        <div
-                            key={task.id}
-                            className={cn(
-                                "flex items-center justify-between gap-4 rounded-xl border p-4 transition-all",
-                                isCompleted ? "border-primary/50 bg-primary/10" : "border-border bg-card/30"
-                            )}
-                        >
-                            <div className="flex flex-col gap-1">
-                                <span className={cn("font-medium", isCompleted && "text-muted-foreground")}>
-                                    {task.title}
-                                </span>
-                                <span className="text-xs text-muted-foreground">
-                                    Max: {task.points} pts
-                                </span>
-                            </div>
-
-                            <div className={cn("relative flex items-center justify-end", isToggling && "opacity-70")}>
-                                <input
-                                    type="text"
-                                    inputMode="numeric"
-                                    placeholder="0"
-                                    defaultValue={points > 0 ? points.toString() : ""}
-                                    onBlur={(e) => {
-                                        let val = parseInt(e.target.value, 10);
-                                        if (isNaN(val) || val === 0) {
-                                            if (points !== 0) onPointsChange(task, selectedDate, 0);
-                                            e.target.value = "";
-                                        } else {
-                                            if (val > task.points) {
-                                                val = task.points;
-                                                e.target.value = val.toString();
-                                            }
-                                            if (val !== points) onPointsChange(task, selectedDate, val);
-                                        }
-                                    }}
-                                    onKeyDown={(e) => {
-                                        if (e.key === "Enter") e.currentTarget.blur();
-                                    }}
-                                    className={cn(
-                                        "h-12 w-16 rounded-lg border text-center text-lg font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-primary/50",
-                                        points > 0
-                                            ? "border-emerald-500/60 bg-emerald-500/15 text-emerald-300 shadow-[0_0_0_1px_rgba(16,185,129,0.25)]"
-                                            : "border-border/60 bg-card/40 text-foreground focus:bg-background"
-                                    )}
-                                />
-                            </div>
-                        </div>
-                    );
-                })}
-
-                {tasks.length === 0 && (
-                    <div className="py-8 text-center text-sm text-muted-foreground">
-                        No tasks for this goal yet.
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-};        if (selectedDateIndex < dates.length - 1) setSelectedDateIndex((prev) => prev + 1);
+        if (selectedDateIndex < dates.length - 1) {
+            setSelectedDateIndex((prev) => prev + 1);
+        }
     };
 
     const isToday = (dateString: string) => {
@@ -228,18 +112,14 @@ export const MobileGoalView: React.FC<MobileGoalViewProps> = ({
                             key={task.id}
                             className={cn(
                                 "flex items-center justify-between gap-4 rounded-xl border p-4 transition-all",
-                                isCompleted
-                                    ? "border-primary/50 bg-primary/10"
-                                    : "border-border bg-card/30"
+                                isCompleted ? "border-primary/50 bg-primary/10" : "border-border bg-card/30"
                             )}
                         >
                             <div className="flex flex-col gap-1">
                                 <span className={cn("font-medium", isCompleted && "text-muted-foreground")}>
                                     {task.title}
                                 </span>
-                                <span className="text-xs text-muted-foreground">
-                                    Max: {task.points} pts
-                                </span>
+                                <span className="text-xs text-muted-foreground">Max: {task.points} pts</span>
                             </div>
 
                             <div className={cn("relative flex items-center justify-end", isToggling && "opacity-70")}>
@@ -262,9 +142,7 @@ export const MobileGoalView: React.FC<MobileGoalViewProps> = ({
                                         }
                                     }}
                                     onKeyDown={(e) => {
-                                        if (e.key === "Enter") {
-                                            e.currentTarget.blur();
-                                        }
+                                        if (e.key === "Enter") e.currentTarget.blur();
                                     }}
                                     className={cn(
                                         "h-12 w-16 rounded-lg border text-center text-lg font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-primary/50",
